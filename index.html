@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Make Type - Typing Trainer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #2f2f2f;
+      color: #bdbdbd;
+      overflow-x: hidden;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 145px;
+    }
+
+    main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .trainer {
+      width: min(860px, 100%);
+      margin-top: 20px;
+    }
+
+    .brand {
+      position: fixed;
+      top: 22px;
+      left: 28px;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      color: #f2f2f2;
+      font-size: 24px;
+    }
+
+    .brand span {
+      color: #7ad69d;
+    }
+
+    .top-icons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-bottom: 10px;
+      opacity: 0.55;
+      font-size: 18px;
+    }
+
+    .metrics {
+      font-size: 12px;
+      line-height: 1.8;
+      margin-bottom: 28px;
+      color: #aaa;
+    }
+
+    .metrics b {
+      color: #e0e0e0;
+      font-weight: 500;
+    }
+
+    .gain {
+      color: #4eca78;
+      font-weight: 600;
+    }
+
+    .key-row {
+      display: inline-flex;
+      gap: 2px;
+      vertical-align: middle;
+      margin-left: 6px;
+    }
+
+    .mini-key {
+      min-width: 20px;
+      height: 17px;
+      background: #569366;
+      color: #d8f8de;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      border-radius: 1px;
+    }
+
+    .bar-wrap {
+      width: 420px;
+      height: 8px;
+      display: inline-block;
+      background: #3b3b3b;
+      border: 1px solid #575757;
+      margin-left: 10px;
+      vertical-align: middle;
+      overflow: hidden;
+    }
+
+    .daily-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #70c084, #b0d780);
+      transition: width 0.3s ease;
+    }
+
+    .typing-box {
+      position: relative;
+      padding: 12px 0 22px;
+      margin-bottom: 26px;
+    }
+
+    .text-line {
+      min-height: 74px;
+      font-size: 20px;
+      line-height: 1.35;
+      letter-spacing: 0.02em;
+      color: #9c9c9c;
+      user-select: none;
+      outline: none;
+      filter: blur(0.15px);
+    }
+
+    .char {
+      position: relative;
+      transition: color 0.1s ease, background 0.1s ease, transform 0.1s ease;
+      border-radius: 3px;
+    }
+
+    .char.space::after {
+      content: "·";
+      opacity: 0.55;
+    }
+
+    .char.correct {
+      color: #d4d4d4;
+    }
+
+    .char.wrong {
+      color: #ff9a9a;
+      background: rgba(190, 70, 70, 0.24);
+    }
+
+    .char.current {
+      color: #fff;
+      background: rgba(126, 185, 255, 0.16);
+    }
+
+    .char.current::before {
+      content: "";
+      position: absolute;
+      left: -1px;
+      top: -2px;
+      width: 2px;
+      height: 28px;
+      background: #77b7ff;
+      border-radius: 20px;
+      animation: blink 1s infinite;
+      box-shadow: 0 0 12px rgba(119, 183, 255, 0.65);
+    }
+
+    @keyframes blink {
+      0%, 48% { opacity: 1; }
+      49%, 100% { opacity: 0.15; }
+    }
+
+    .slide-track {
+      width: 100%;
+      height: 7px;
+      background: #424242;
+      border-radius: 100px;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+
+    .slide-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #73bf88, #d6c365, #e19475);
+      border-radius: 100px;
+      transition: width 0.18s cubic-bezier(.2,.8,.2,1);
+    }
+
+    .keyboard {
+      width: min(625px, 100%);
+      margin: 0 auto;
+      background: rgba(255,255,255,0.08);
+      padding: 10px;
+      border-radius: 7px;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.18);
+    }
+
+    .kb-row {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 2px;
+    }
+
+    .key {
+      height: 37px;
+      min-width: 37px;
+      flex: 1;
+      background: #6e875f;
+      color: rgba(255,255,255,0.65);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      transition: transform 0.08s ease, background 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .key.small-text { font-size: 9px; }
+    .key.wide { flex: 1.65; }
+    .key.extra-wide { flex: 6; }
+    .key.pink { background: #896374; }
+    .key.yellow { background: #9a832d; }
+    .key.blue { background: #667d7c; }
+    .key.red { background: #9a554f; }
+
+    .key.active {
+      background: #8fcb88 !important;
+      color: #173b22;
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 0 0 4px rgba(125, 201, 255, 0.24), 0 0 18px rgba(125, 201, 255, 0.55);
+    }
+
+    aside {
+      border-left: 1px solid rgba(255,255,255,0.04);
+      padding: 200px 10px 20px;
+      font-size: 12px;
+      color: #858585;
+    }
+
+    .profile {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #8bc98d, #dfc272);
+      margin: 0 auto 8px;
+      display: grid;
+      place-items: center;
+      color: #222;
+      font-weight: 800;
+    }
+
+    .menu a {
+      display: block;
+      padding: 7px 9px;
+      color: #888;
+      text-decoration: none;
+      border-radius: 5px;
+      margin-bottom: 2px;
+    }
+
+    .menu a.active, .menu a:hover {
+      background: rgba(255,255,255,0.06);
+      color: #dadada;
+    }
+
+    .tips {
+      margin-top: 20px;
+      font-size: 10px;
+      line-height: 1.5;
+      text-align: center;
+      opacity: 0.75;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 22px;
+    }
+
+    button {
+      background: #5d8f68;
+      color: #f5f5f5;
+      border: 0;
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.16);
+    }
+
+    button.secondary {
+      background: #464646;
+    }
+
+    button:hover { filter: brightness(1.08); }
+
+    .result {
+      text-align: center;
+      margin-top: 12px;
+      color: #d0d0d0;
+      min-height: 24px;
+    }
+
+    @media (max-width: 820px) {
+      .app { grid-template-columns: 1fr; }
+      aside { display: none; }
+      .brand { position: static; padding: 18px 20px 0; }
+      main { padding-top: 20px; }
+      .text-line { font-size: 18px; }
+      .bar-wrap { width: 220px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="brand">Make<span>Type</span></div>
+
+  <div class="app">
+    <main>
+      <section class="trainer">
+        <div class="top-icons">? ↶ ↷ ◱ ⚙</div>
+
+        <div class="metrics">
+          <div>Metrics: &nbsp; Speed: <b id="speed">0.0</b>wpm <span class="gain">(+0.0wpm)</span> &nbsp; Accuracy: <b id="accuracy">100.0%</b> <span class="gain">(+0.0%)</span> &nbsp; Score: <b id="score">0</b></div>
+          <div>All keys:
+            <span class="key-row" id="miniKeys"></span>
+          </div>
+          <div>Current key: &nbsp; <span id="currentKeyText">Start typing...</span></div>
+          <div>Daily goal: &nbsp; <span id="dailyText">0/30 minutes</span> <span class="bar-wrap"><span class="daily-bar" id="dailyBar"></span></span></div>
+        </div>
+
+        <div class="typing-box">
+          <div class="text-line" id="textLine" tabindex="0"></div>
+          <div class="slide-track"><div class="slide-fill" id="slideFill"></div></div>
+        </div>
+
+        <div class="keyboard" id="keyboard"></div>
+
+        <div class="controls">
+          <button onclick="restartLesson()">Restart</button>
+          <button class="secondary" onclick="newLesson()">New Text</button>
+        </div>
+        <div class="result" id="result"></div>
+      </section>
+    </main>
+
+    <aside>
+      <div class="profile">
+        <div class="avatar">M</div>
+        <div>Make Type User</div>
+      </div>
+      <nav class="menu">
+        <a class="active" href="#">⌨ Practice</a>
+        <a href="#">▧ Profile</a>
+        <a href="#">? Help</a>
+        <a href="#">♡ High Scores</a>
+        <a href="#">☁ Multiplayer</a>
+        <a href="#">↯ Typing Test</a>
+        <a href="#">▤ Layouts</a>
+      </nav>
+      <div class="tips">Press any key to start.<br>Esc = restart<br>Tab is disabled.</div>
+    </aside>
+  </div>
+
+  <script>
+    const lessons = [
+      "quite ran get already clearly appeared stone found land girls others red secret pay corner together dressed light young",
+      "never home small place picture hand sound left right open form sentence until important paper different",
+      "learn type smooth focus speed accuracy practice keyboard letter mistake progress simple soft trainer",
+      "people between school always around because another country example thought children almost without question"
+    ];
+
+    const keyboardRows = [
+      ["`", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=", "Backspace"],
+      ["Tab", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\"],
+      ["Caps Lock", "A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "Enter"],
+      ["Shift", "Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "Shift"],
+      ["Ctrl", "Alt", "Space", "Alt", "Ctrl"]
+    ];
+
+    const colorClass = {
+      Q: "blue", W: "yellow", E: "yellow", R: "blue", T: "blue", Y: "pink", U: "pink", I: "yellow", O: "yellow", P: "blue",
+      A: "blue", S: "yellow", D: "yellow", F: "blue", G: "blue", H: "pink", J: "pink", K: "yellow", L: "yellow",
+      Z: "blue", X: "yellow", C: "yellow", V: "blue", B: "blue", N: "pink", M: "pink", Space: "red"
+    };
+
+    let text = "";
+    let index = 0;
+    let mistakes = 0;
+    let typed = 0;
+    let startTime = null;
+    let lessonDone = false;
+
+    const textLine = document.getElementById("textLine");
+    const speedEl = document.getElementById("speed");
+    const accEl = document.getElementById("accuracy");
+    const scoreEl = document.getElementById("score");
+    const slideFill = document.getElementById("slideFill");
+    const resultEl = document.getElementById("result");
+    const currentKeyText = document.getElementById("currentKeyText");
+    const dailyBar = document.getElementById("dailyBar");
+    const dailyText = document.getElementById("dailyText");
+
+    function createMiniKeys() {
+      const mini = document.getElementById("miniKeys");
+      "etianmsroulcgdphbkfwzyvxqj".toUpperCase().split("").forEach(k => {
+        const span = document.createElement("span");
+        span.className = "mini-key";
+        span.textContent = k;
+        mini.appendChild(span);
+      });
+    }
+
+    function createKeyboard() {
+      const keyboard = document.getElementById("keyboard");
+      keyboard.innerHTML = "";
+      keyboardRows.forEach(row => {
+        const rowEl = document.createElement("div");
+        rowEl.className = "kb-row";
+        row.forEach(k => {
+          const key = document.createElement("div");
+          key.className = "key";
+          if (["Backspace", "Caps Lock", "Enter", "Shift", "Tab", "Ctrl", "Alt"].includes(k)) key.classList.add("small-text", "wide");
+          if (k === "Space") key.classList.add("extra-wide");
+          if (colorClass[k]) key.classList.add(colorClass[k]);
+          key.dataset.key = k.toLowerCase();
+          key.textContent = k === "Space" ? "" : k;
+          rowEl.appendChild(key);
+        });
+        keyboard.appendChild(rowEl);
+      });
+    }
+
+    function renderText() {
+      textLine.innerHTML = "";
+      [...text].forEach((ch, i) => {
+        const span = document.createElement("span");
+        span.className = "char";
+        if (ch === " ") span.classList.add("space");
+        if (i === index) span.classList.add("current");
+        span.textContent = ch === " " ? " " : ch;
+        textLine.appendChild(span);
+      });
+      updateCurrentKey();
+    }
+
+    function updateCurrentKey() {
+      document.querySelectorAll(".key").forEach(k => k.classList.remove("active"));
+      const ch = text[index];
+      if (!ch) return;
+      const keyName = ch === " " ? "space" : ch.toLowerCase();
+      const keyEl = document.querySelector(`.key[data-key="${CSS.escape(keyName)}"]`);
+      if (keyEl) keyEl.classList.add("active");
+      currentKeyText.textContent = ch === " " ? "Space" : ch.toUpperCase();
+    }
+
+    function updateStats() {
+      const elapsedMin = startTime ? (Date.now() - startTime) / 60000 : 0;
+      const wpm = elapsedMin > 0 ? ((typed / 5) / elapsedMin) : 0;
+      const accuracy = typed > 0 ? Math.max(0, ((typed - mistakes) / typed) * 100) : 100;
+      const score = Math.max(0, Math.round(wpm * accuracy));
+      speedEl.textContent = wpm.toFixed(1);
+      accEl.textContent = accuracy.toFixed(1) + "%";
+      scoreEl.textContent = score.toLocaleString();
+      slideFill.style.width = ((index / text.length) * 100) + "%";
+      const fakeMinutes = Math.min(30, Math.floor(typed / 25));
+      dailyText.textContent = fakeMinutes + "/30 minutes";
+      dailyBar.style.width = (fakeMinutes / 30 * 100) + "%";
+    }
+
+    function handleKey(e) {
+      if (e.key === "Tab") e.preventDefault();
+      if (e.key === "Escape") return restartLesson();
+      if (lessonDone || e.ctrlKey || e.altKey || e.metaKey) return;
+      if (e.key.length !== 1 && e.key !== "Backspace") return;
+
+      if (!startTime) startTime = Date.now();
+
+      const chars = document.querySelectorAll(".char");
+
+      if (e.key === "Backspace") {
+        if (index > 0) {
+          index--;
+          typed = Math.max(0, typed - 1);
+          chars[index].className = "char" + (text[index] === " " ? " space" : "");
+        }
+      } else {
+        typed++;
+        if (e.key === text[index]) {
+          chars[index].classList.remove("current");
+          chars[index].classList.add("correct");
+        } else {
+          mistakes++;
+          chars[index].classList.remove("current");
+          chars[index].classList.add("wrong");
+        }
+        index++;
+      }
+
+      document.querySelectorAll(".char").forEach(c => c.classList.remove("current"));
+      if (index < text.length) {
+        document.querySelectorAll(".char")[index].classList.add("current");
+      } else {
+        lessonDone = true;
+        resultEl.textContent = "Lesson completed. Press New Text or Restart.";
+      }
+
+      updateCurrentKey();
+      updateStats();
+    }
+
+    function restartLesson() {
+      index = 0;
+      mistakes = 0;
+      typed = 0;
+      startTime = null;
+      lessonDone = false;
+      resultEl.textContent = "";
+      slideFill.style.width = "0%";
+      renderText();
+      updateStats();
+      textLine.focus();
+    }
+
+    function newLesson() {
+      text = lessons[Math.floor(Math.random() * lessons.length)];
+      restartLesson();
+    }
+
+    createMiniKeys();
+    createKeyboard();
+    newLesson();
+    document.addEventListener("keydown", handleKey);
+    window.addEventListener("load", () => textLine.focus());
+  </script>
+</body>
+</html>
